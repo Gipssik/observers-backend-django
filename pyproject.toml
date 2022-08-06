@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "observers-backend-django"
+version = "0.1.0"
+description = "Backend API for observers.gipss.tech written with Django and DRF"
+authors = ["Gipss <gissa.dmtr@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+Django = "^4.1"
+djangorestframework = "^3.13.1"
+environs = {extras = ["django"], version = "^9.5.0"}
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

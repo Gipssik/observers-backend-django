@@ -25,7 +25,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # 3rd party
     "debug_toolbar",
-    "django_filters",
     "rest_framework",
     "rest_framework_simplejwt",
     # Local

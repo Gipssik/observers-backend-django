@@ -12,14 +12,13 @@ class TokenObtainSerializer(TokenObtainPairSerializer):
 
         super().validate(attrs)
         refresh = self.get_token(self.user)
-        data = {
+        return {
             "access_token": str(refresh.access_token),
             "token_type": "bearer",
         }
-        return data
 
 
-class RoleSerializer(serializers.ModelSerializer):
+class RoleBaseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
         fields = ["title"]
@@ -32,7 +31,7 @@ class UserCreationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data: dict) -> User:
         user_role, _ = Role.objects.get_or_create(title="User")
-        validated_data.update({"role": user_role})
+        validated_data["role"] = user_role
         u = User(**validated_data)
         u.set_password(validated_data["password"])
         u.save()
@@ -62,8 +61,16 @@ class UserChangeSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    role = RoleSerializer()
+    role = RoleBaseSerializer()
 
     class Meta:
         model = User
         fields = ["id", "username", "email", "date_created", "profile_image", "role"]
+
+
+class RoleSerializer(serializers.ModelSerializer):
+    users = UserSerializer(many=True)
+
+    class Meta:
+        model = Role
+        fields = ["id", "title", "users"]

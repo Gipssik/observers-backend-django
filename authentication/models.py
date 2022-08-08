@@ -1,4 +1,5 @@
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
+from django.contrib.auth.models import PermissionsMixin
 from django.core.validators import validate_email
 from django.db import models
 from django.utils import timezone
@@ -66,6 +67,10 @@ class User(AbstractBaseUser):
     def __str__(self):
         return self.username
 
+    @property
+    def is_superuser(self):
+        return self.role.title == "Admin"
+
     @staticmethod
     def has_perm(perm, obj=None) -> bool:
         """Does the user have a specific permission?"""
@@ -79,4 +84,4 @@ class User(AbstractBaseUser):
     @property
     def is_staff(self) -> bool:
         """Is the user a member of staff?"""
-        return self.role.title == "Admin"
+        return self.is_superuser

@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 
 from environs import Env
@@ -13,6 +14,8 @@ DEBUG = env.bool("DEBUG", default=False)
 
 ALLOWED_HOSTS = []
 
+INTERNAL_IPS = ["127.0.0.1", "localhost"]
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -20,6 +23,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # 3rd party
+    "debug_toolbar",
+    "django_filters",
+    "rest_framework",
+    "rest_framework_simplejwt",
+    # Local
     "authentication",
 ]
 
@@ -31,6 +40,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -71,6 +81,17 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PAGINATION_CLASS": "common.pagination.LimitSkipPagination",
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=30),
+}
 
 LANGUAGE_CODE = "en-us"
 

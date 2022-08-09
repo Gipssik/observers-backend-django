@@ -41,6 +41,7 @@ class NotificationSerializer(serializers.ModelSerializer):
 
 class QuestionCreationSerializer(serializers.ModelSerializer):
     tags = serializers.ListField(child=serializers.CharField(max_length=64))
+    author_id = serializers.IntegerField(required=True)
 
     class Meta:
         model = Question
@@ -62,7 +63,8 @@ class TagBaseSerializer(serializers.ModelSerializer):
 
 
 class QuestionSerializer(serializers.ModelSerializer):
-    tags = TagBaseSerializer()
+    tags = TagBaseSerializer(many=True)
+    author_id = serializers.IntegerField(required=True)
 
     class Meta:
         model = Question
@@ -70,7 +72,7 @@ class QuestionSerializer(serializers.ModelSerializer):
 
 
 class TagSerializer(serializers.ModelSerializer):
-    questions = QuestionSerializer()
+    questions = QuestionSerializer(many=True)
 
     class Meta:
         model = Tag
@@ -92,6 +94,8 @@ class CommentChangeSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    author_id = serializers.IntegerField(required=True)
+
     class Meta:
         model = Comment
         exclude = ["author"]

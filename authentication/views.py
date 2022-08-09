@@ -5,19 +5,12 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from authentication.models import User, Role
 from authentication.permissions import CanChangeUserOrReadOnly
-from authentication.serializers import (
-    TokenObtainSerializer,
-    UserSerializer,
-    UserCreationSerializer,
-    UserChangeSerializer,
-    RoleSerializer,
-    RoleBaseSerializer,
-)
+from authentication import serializers as auth_serializers
 from common import mixins as common_mixins
 
 
 class TokenObtainView(TokenObtainPairView):
-    serializer_class = TokenObtainSerializer
+    serializer_class = auth_serializers.TokenObtainSerializer
 
 
 class RoleViewSet(
@@ -30,11 +23,11 @@ class RoleViewSet(
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.serializer_action_classes = {
-            "list": RoleSerializer,
-            "create": RoleBaseSerializer,
-            "retrieve": RoleSerializer,
-            "update": RoleBaseSerializer,
-            "partial_update": RoleBaseSerializer,
+            "list": auth_serializers.RoleSerializer,
+            "create": auth_serializers.RoleBaseSerializer,
+            "retrieve": auth_serializers.RoleSerializer,
+            "update": auth_serializers.RoleBaseSerializer,
+            "partial_update": auth_serializers.RoleBaseSerializer,
         }
 
     def get_queryset(self):
@@ -51,11 +44,11 @@ class UserViewSet(
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.serializer_action_classes = {
-            "list": UserSerializer,
-            "create": UserCreationSerializer,
-            "retrieve": UserSerializer,
-            "update": UserChangeSerializer,
-            "partial_update": UserChangeSerializer,
+            "list": auth_serializers.UserSerializer,
+            "create": auth_serializers.UserCreationSerializer,
+            "retrieve": auth_serializers.UserSerializer,
+            "update": auth_serializers.UserChangeSerializer,
+            "partial_update": auth_serializers.UserChangeSerializer,
         }
 
     def get_queryset(self):
@@ -67,5 +60,5 @@ class UserMeView(views.APIView):
 
     @staticmethod
     def get(request, *args, **kwargs):
-        serializer = UserSerializer(request.user)
+        serializer = auth_serializers.UserSerializer(request.user)
         return Response(serializer.data)

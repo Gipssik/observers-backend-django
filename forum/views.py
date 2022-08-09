@@ -4,9 +4,12 @@ from rest_framework.response import Response
 
 from authentication.models import User
 from common import mixins as common_mixins
-from forum.models import Notification
-from forum.permissions import IsAdminOrNotificationDeletionByOwner
-from forum.serializers import NotificationSerializer, NotificationBaseSerializer
+from forum.models import Notification, Tag
+from forum.permissions import (
+    IsAdminOrNotificationDeletionByOwner,
+    IsAdminUserOrReadOnly,
+)
+from forum import serializers as forum_serializers
 
 
 class NotificationViewSet(
@@ -19,11 +22,11 @@ class NotificationViewSet(
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.serializer_action_classes = {
-            "list": NotificationSerializer,
-            "create": NotificationBaseSerializer,
-            "retrieve": NotificationSerializer,
-            "update": NotificationBaseSerializer,
-            "partial_update": NotificationBaseSerializer,
+            "list": forum_serializers.NotificationSerializer,
+            "create": forum_serializers.NotificationBaseSerializer,
+            "retrieve": forum_serializers.NotificationSerializer,
+            "update": forum_serializers.NotificationBaseSerializer,
+            "partial_update": forum_serializers.NotificationBaseSerializer,
         }
 
     def retrieve(self, request, *args, **kwargs):
@@ -34,3 +37,24 @@ class NotificationViewSet(
         )
         serializer = self.get_serializer(u.notifications.all(), many=True)
         return Response(serializer.data)
+
+
+class TagViewSet(
+    common_mixins.MultipleSerializersMixinSet,
+    viewsets.ModelViewSet,
+):
+    queryset = Tag.objects.all()
+    permission_classes = [IsAdminUserOrReadOnly]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.serializer_action_classes = {
+            "list": forum_serializers.TagSerializer,
+            "create": forum_serializers.TagBaseSerializer,
+            "retrieve": forum_serializers.TagSerializer,
+            "update": forum_serializers.TagBaseSerializer,
+            "partial_update": forum_serializers.TagBaseSerializer,
+        }
+
+    def get_queryset(self):
+        return Tag.objects.all().prefetch_related("questions__tags")

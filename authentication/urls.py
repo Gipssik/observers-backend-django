@@ -1,14 +1,14 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from authentication.views import UserViewSet, TokenObtainView, UserMeView, RoleViewSet
+from authentication import views
 
 router = DefaultRouter()
-router.register(r"users", UserViewSet)
-router.register(r"roles", RoleViewSet)
+router.register(r"users", views.UserViewSet)
+router.register(r"roles", views.RoleViewSet)
 
 urlpatterns = [
-    path("token/", TokenObtainView.as_view(), name="token_obtain"),
-    path("users/me/", UserMeView.as_view(), name="user_me"),
+    path("token/", views.TokenObtainView.as_view(), name="token_obtain"),
+    path("users/me/", views.UserMeView.as_view(), name="user_me"),
     path("", include(router.urls)),
 ]

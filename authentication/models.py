@@ -38,22 +38,18 @@ class UserManager(BaseUserManager):
 
 
 class Role(models.Model):
-    title = models.CharField(max_length=128, null=False, blank=False, unique=True)
+    title = models.CharField(max_length=128, unique=True)
 
     def __str__(self):
         return self.title
 
 
 class User(AbstractBaseUser):
-    username = models.CharField(
-        max_length=128, null=False, blank=False, unique=True, db_index=True
-    )
-    email = models.EmailField(null=False, blank=False, unique=True, db_index=True)
-    date_created = models.DateTimeField(null=False, blank=False, default=timezone.now)
+    username = models.CharField(max_length=128, unique=True, db_index=True)
+    email = models.EmailField(unique=True, db_index=True)
+    date_created = models.DateTimeField(default=timezone.now)
     profile_image = models.CharField(
         max_length=128,
-        null=False,
-        blank=False,
         default="https://i.imgur.com/2VVImvn.jpg",
     )
     role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name="users")

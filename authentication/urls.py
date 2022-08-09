@@ -1,9 +1,9 @@
 from django.urls import path, include
-from rest_framework import routers
+from rest_framework.routers import DefaultRouter
 
 from authentication.views import UserViewSet, TokenObtainView, UserMeView, RoleViewSet
 
-router = routers.DefaultRouter()
+router = DefaultRouter()
 router.register(r"users", UserViewSet)
 router.register(r"roles", RoleViewSet)
 

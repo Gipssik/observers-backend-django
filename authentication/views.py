@@ -25,7 +25,6 @@ class RoleViewSet(
     viewsets.ModelViewSet,
 ):
     queryset = Role.objects.all()
-    serializer_class = RoleSerializer
     permission_classes = [permissions.IsAdminUser]
 
     def __init__(self, *args, **kwargs):

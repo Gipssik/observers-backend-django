@@ -18,12 +18,6 @@ class TokenObtainSerializer(TokenObtainPairSerializer):
         }
 
 
-class RoleBaseSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Role
-        fields = ["title"]
-
-
 class UserCreationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -39,11 +33,7 @@ class UserCreationSerializer(serializers.ModelSerializer):
 
 
 class UserChangeSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(
-        required=False, validators=[UniqueValidator(queryset=User.objects.all())]
-    )
     password = serializers.CharField(required=False, validators=[validate_password])
-    profile_image = serializers.CharField(required=False)
 
     class Meta:
         model = User
@@ -58,6 +48,12 @@ class UserChangeSerializer(serializers.ModelSerializer):
         )
         instance.save()
         return instance
+
+
+class RoleBaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Role
+        fields = ["title"]
 
 
 class UserSerializer(serializers.ModelSerializer):

@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "drf_yasg",
     # Local
     "authentication",
+    "forum",
 ]
 
 MIDDLEWARE = [

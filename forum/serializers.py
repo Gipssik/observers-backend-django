@@ -1,38 +1,28 @@
-from django.db import IntegrityError
-from django.http import Http404
 from rest_framework import serializers
 
+from authentication.models import User
 from forum.models import Notification, Tag, Question, Comment
 
 
 class NotificationBaseSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=256, required=True)
-    user_id = serializers.IntegerField(required=True)
-    question_id = serializers.IntegerField(required=True)
+    user_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    question_id = serializers.PrimaryKeyRelatedField(queryset=Question.objects.all())
 
     def create(self, validated_data: dict) -> Notification:
-        try:
-            notification = Notification.objects.create(**validated_data)
-        except IntegrityError as err:
-            raise Http404 from err
-        else:
-            return notification
+        return Notification.objects.create(**validated_data)
 
     def update(self, instance: Notification, validated_data: dict) -> Notification:
         for key, value in validated_data.items():
             setattr(instance, key, value)
 
-        try:
-            instance.save()
-        except IntegrityError as err:
-            raise Http404 from err
-        else:
-            return instance
+        instance.save()
+        return instance
 
 
 class NotificationSerializer(serializers.ModelSerializer):
-    user_id = serializers.IntegerField(required=True)
-    question_id = serializers.IntegerField(required=True)
+    user_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    question_id = serializers.PrimaryKeyRelatedField(queryset=Question.objects.all())
 
     class Meta:
         model = Notification
@@ -40,20 +30,48 @@ class NotificationSerializer(serializers.ModelSerializer):
 
 
 class QuestionCreationSerializer(serializers.ModelSerializer):
-    tags = serializers.ListField(child=serializers.CharField(max_length=64))
-    author_id = serializers.IntegerField(required=True)
+    tags = serializers.SlugRelatedField(
+        many=True, slug_field="title", queryset=Tag.objects.all()
+    )
+    author_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
 
     class Meta:
         model = Question
         fields = ["title", "content", "tags", "author_id"]
 
+    def create(self, validated_data: dict):
+        # Set removes duplicates + db works faster with sets
+        tags = set(validated_data.pop("tags"))
+        question = Question.objects.create(**validated_data)
+
+        question.tags.set(tags)
+        return question
+
 
 class QuestionChangeSerializer(serializers.ModelSerializer):
-    tags = serializers.ListField(child=serializers.CharField(max_length=64))
+    tags = serializers.SlugRelatedField(
+        many=True, slug_field="title", queryset=Tag.objects.all()
+    )
 
     class Meta:
         model = Question
         fields = ["title", "content", "tags", "views"]
+
+    def update(self, instance: Question, validated_data: dict):
+        if not validated_data:
+            return instance
+
+        tags = validated_data.pop("tags", None)
+        if tags is not None:
+            # Set removes duplicates + db works faster with sets
+            tags = set(tags)
+            instance.tags.set(tags)
+
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+
+        instance.save()
+        return instance
 
 
 class TagBaseSerializer(serializers.ModelSerializer):
@@ -64,7 +82,7 @@ class TagBaseSerializer(serializers.ModelSerializer):
 
 class QuestionSerializer(serializers.ModelSerializer):
     tags = TagBaseSerializer(many=True)
-    author_id = serializers.IntegerField(required=True)
+    author_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
 
     class Meta:
         model = Question
@@ -80,7 +98,9 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class CommentCreationSerializer(serializers.ModelSerializer):
-    author_id = serializers.IntegerField(required=False, default=None)
+    author_id = serializers.PrimaryKeyRelatedField(
+        required=False, default=None, queryset=User.objects.all()
+    )
 
     class Meta:
         model = Comment
@@ -94,7 +114,7 @@ class CommentChangeSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    author_id = serializers.IntegerField(required=True)
+    author_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
 
     class Meta:
         model = Comment

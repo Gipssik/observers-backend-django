@@ -40,6 +40,9 @@ class UserChangeSerializer(serializers.ModelSerializer):
         fields = ["email", "password", "profile_image"]
 
     def update(self, instance: User, validated_data: dict) -> User:
+        if not validated_data:
+            return instance
+
         instance.email = validated_data.get("email", instance.email)
         if new_password := validated_data.get("password"):
             instance.set_password(new_password)

@@ -1,5 +1,6 @@
-from rest_framework import views, permissions
+from rest_framework import permissions
 from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 
@@ -41,6 +42,10 @@ class UserViewSet(
     queryset = User.objects.all()
     permission_classes = [CanChangeUserOrReadOnly]
 
+    @property
+    def paginator(self):
+        return None if self.action == "me" else super().paginator
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.serializer_action_classes = {
@@ -49,16 +54,18 @@ class UserViewSet(
             "retrieve": auth_serializers.UserSerializer,
             "update": auth_serializers.UserChangeSerializer,
             "partial_update": auth_serializers.UserChangeSerializer,
+            "me": auth_serializers.UserSerializer,
         }
 
     def get_queryset(self):
         return User.objects.all().select_related("role")
 
-
-class UserMeView(views.APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    @staticmethod
-    def get(request, *args, **kwargs):
+    @action(
+        detail=False,
+        methods=["GET"],
+        name="user_me",
+        permission_classes=[permissions.IsAuthenticated],
+    )
+    def me(self, request, *args, **kwargs):
         serializer = auth_serializers.UserSerializer(request.user)
         return Response(serializer.data)

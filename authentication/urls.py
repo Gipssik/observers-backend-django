@@ -9,6 +9,5 @@ router.register(r"roles", views.RoleViewSet)
 
 urlpatterns = [
     path("token/", views.TokenObtainView.as_view(), name="token_obtain"),
-    path("users/me/", views.UserMeView.as_view(), name="user_me"),
     path("", include(router.urls)),
 ]

@@ -40,6 +40,7 @@ class UserViewSet(
     viewsets.ModelViewSet,
 ):
     queryset = User.objects.all()
+    serializer_class = auth_serializers.UserSerializer
     permission_classes = [CanChangeUserOrReadOnly]
 
     @property
@@ -49,12 +50,9 @@ class UserViewSet(
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.serializer_action_classes = {
-            "list": auth_serializers.UserSerializer,
             "create": auth_serializers.UserCreationSerializer,
-            "retrieve": auth_serializers.UserSerializer,
             "update": auth_serializers.UserChangeSerializer,
             "partial_update": auth_serializers.UserChangeSerializer,
-            "me": auth_serializers.UserSerializer,
         }
 
     def get_queryset(self):
@@ -67,5 +65,5 @@ class UserViewSet(
         permission_classes=[permissions.IsAuthenticated],
     )
     def me(self, request, *args, **kwargs):
-        serializer = auth_serializers.UserSerializer(request.user)
+        serializer = self.get_serializer(request.user)
         return Response(serializer.data)

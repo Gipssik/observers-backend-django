@@ -25,9 +25,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # 3rd party
     "debug_toolbar",
+    "drf_yasg",
+    "django_filters",
     "rest_framework",
     "rest_framework_simplejwt",
-    "drf_yasg",
     # Local
     "authentication",
     "forum",
@@ -88,6 +89,7 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PAGINATION_CLASS": "common.pagination.LimitSkipPagination",
+    "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
 }
 
 SIMPLE_JWT = {

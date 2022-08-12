@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     # Local
     "authentication",
     "forum",
+    "news",
 ]
 
 MIDDLEWARE = [

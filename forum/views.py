@@ -1,5 +1,5 @@
 from django_filters import rest_framework as filters
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
@@ -7,11 +7,11 @@ from rest_framework.response import Response
 from authentication.models import User
 from common import mixins as common_mixins
 from common.exceptions import UnprocessableEntity
+from common.permissions import IsAdminUserOrReadOnly
 from forum.filters import QuestionFilter
 from forum.models import Notification, Tag, Question, Comment
 from forum.permissions import (
     IsAdminOrNotificationDeletionByOwner,
-    IsAdminUserOrReadOnly,
     HasAccessToObjectOrReadOnly,
     HasAccessToUpdateCertainCommentField,
 )

@@ -17,15 +17,6 @@ class IsAdminOrNotificationDeletionByOwner(permissions.IsAdminUser):
         )
 
 
-class IsAdminUserOrReadOnly(permissions.IsAdminUser):
-    """Check if user is admin or is method safe."""
-
-    def has_permission(self, request, view):
-        return request.method in permissions.SAFE_METHODS or super().has_permission(
-            request, view
-        )
-
-
 class HasAccessToObjectOrReadOnly(permissions.BasePermission):
     """Check if current user is superuser or author of object"""
 

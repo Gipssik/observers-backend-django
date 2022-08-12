@@ -53,18 +53,17 @@ class UserChangeSerializer(serializers.ModelSerializer):
         return instance
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "email", "date_created", "profile_image", "role"]
+        depth = 1
+
+
 class RoleBaseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
         fields = ["title"]
-
-
-class UserSerializer(serializers.ModelSerializer):
-    role = RoleBaseSerializer()
-
-    class Meta:
-        model = User
-        fields = ["id", "username", "email", "date_created", "profile_image", "role"]
 
 
 class RoleSerializer(serializers.ModelSerializer):

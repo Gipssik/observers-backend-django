@@ -1,3 +1,4 @@
+from rest_framework import status
 from rest_framework.response import Response
 
 
@@ -27,7 +28,12 @@ class ReturnCreatedObjectWithRetrieveSerializerMixin:
         serializer_class = self.get_serializer_class(action="retrieve")
         instance_serializer = serializer_class(instance)
 
-        return Response(instance_serializer.data)
+        headers = self.get_success_headers(instance_serializer.data)
+        return Response(
+            instance_serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers,
+        )
 
 
 class ReturnUpdatedObjectWithRetrieveSerializerMixin:

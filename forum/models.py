@@ -44,7 +44,7 @@ class Comment(models.Model):
         "authentication.User", on_delete=models.CASCADE, related_name="comments"
     )
     question = models.ForeignKey(
-        Question, on_delete=models.CASCADE, related_name="questions"
+        Question, on_delete=models.CASCADE, related_name="comments"
     )
 
     def __str__(self):

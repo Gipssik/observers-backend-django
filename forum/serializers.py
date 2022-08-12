@@ -1,28 +1,26 @@
 from rest_framework import serializers
 
 from authentication.models import User
+from common.exceptions import UnprocessableEntity
 from forum.models import Notification, Tag, Question, Comment
 
 
-class NotificationBaseSerializer(serializers.Serializer):
-    title = serializers.CharField(max_length=256, required=True)
-    user_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
-    question_id = serializers.PrimaryKeyRelatedField(queryset=Question.objects.all())
+class NotificationBaseSerializer(serializers.ModelSerializer):
+    user_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), source="user"
+    )
+    question_id = serializers.PrimaryKeyRelatedField(
+        queryset=Question.objects.all(), source="question"
+    )
 
-    def create(self, validated_data: dict) -> Notification:
-        return Notification.objects.create(**validated_data)
-
-    def update(self, instance: Notification, validated_data: dict) -> Notification:
-        for key, value in validated_data.items():
-            setattr(instance, key, value)
-
-        instance.save()
-        return instance
+    class Meta:
+        model = Notification
+        fields = ["title", "user_id", "question_id"]
 
 
 class NotificationSerializer(serializers.ModelSerializer):
-    user_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
-    question_id = serializers.PrimaryKeyRelatedField(queryset=Question.objects.all())
+    user_id = serializers.PrimaryKeyRelatedField(read_only=True)
+    question_id = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Notification
@@ -33,7 +31,9 @@ class QuestionCreationSerializer(serializers.ModelSerializer):
     tags = serializers.SlugRelatedField(
         many=True, slug_field="title", queryset=Tag.objects.all()
     )
-    author_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    author_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), required=False, source="author"
+    )
 
     class Meta:
         model = Question
@@ -42,6 +42,13 @@ class QuestionCreationSerializer(serializers.ModelSerializer):
     def create(self, validated_data: dict):
         # Set removes duplicates + db works faster with sets
         tags = set(validated_data.pop("tags"))
+
+        if "author" not in validated_data:
+            request = self.context.get("request")
+            if not hasattr(request, "user"):
+                raise UnprocessableEntity
+            validated_data["author"] = request.user
+
         question = Question.objects.create(**validated_data)
 
         question.tags.set(tags)
@@ -74,19 +81,19 @@ class QuestionChangeSerializer(serializers.ModelSerializer):
         return instance
 
 
-class TagBaseSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Tag
-        fields = ["title"]
-
-
 class QuestionSerializer(serializers.ModelSerializer):
-    tags = TagBaseSerializer(many=True)
-    author_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    author_id = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Question
         exclude = ["author"]
+        depth = 1
+
+
+class TagBaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = ["title"]
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -99,12 +106,43 @@ class TagSerializer(serializers.ModelSerializer):
 
 class CommentCreationSerializer(serializers.ModelSerializer):
     author_id = serializers.PrimaryKeyRelatedField(
-        required=False, default=None, queryset=User.objects.all()
+        required=False,
+        default=None,
+        queryset=User.objects.all(),
+        source="author",
+    )
+    question_id = serializers.PrimaryKeyRelatedField(
+        queryset=Question.objects.all(), source="question"
     )
 
     class Meta:
         model = Comment
         fields = ["content", "question_id", "author_id"]
+
+    @staticmethod
+    def _create_notification(instance: Comment) -> Notification:
+        """Creates notification for a comment."""
+
+        username = instance.author.username
+        question_title = instance.question.title
+        return Notification.objects.create(
+            title=f'User {username} commented your question: "{question_title}".',
+            user=instance.author,
+            question=instance.question,
+        )
+
+    def create(self, validated_data: dict):
+        request = self.context.get("request")
+        if not validated_data.get("author"):
+            if not hasattr(request, "user"):
+                raise UnprocessableEntity
+            validated_data["author"] = request.user.id
+
+        comment = Comment.objects.create(**validated_data)
+        if request.user != comment.author:
+            self._create_notification(comment)
+
+        return comment
 
 
 class CommentChangeSerializer(serializers.ModelSerializer):
@@ -114,8 +152,9 @@ class CommentChangeSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    author_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    question_id = serializers.PrimaryKeyRelatedField(read_only=True)
+    author_id = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Comment
-        exclude = ["author"]
+        exclude = ["question", "author"]

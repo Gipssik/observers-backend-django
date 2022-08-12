@@ -1,5 +1,5 @@
 from django_filters import rest_framework as filters
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
@@ -8,10 +8,12 @@ from authentication.models import User
 from common import mixins as common_mixins
 from common.exceptions import UnprocessableEntity
 from forum.filters import QuestionFilter
-from forum.models import Notification, Tag, Question
+from forum.models import Notification, Tag, Question, Comment
 from forum.permissions import (
     IsAdminOrNotificationDeletionByOwner,
     IsAdminUserOrReadOnly,
+    HasAccessToObjectOrReadOnly,
+    HasAccessToUpdateCertainCommentField,
 )
 from forum import serializers as forum_serializers
 
@@ -70,6 +72,10 @@ class QuestionViewSet(
 ):
     queryset = Question.objects.all()
     serializer_class = forum_serializers.QuestionSerializer
+    permission_classes = [
+        permissions.IsAuthenticatedOrReadOnly,
+        HasAccessToObjectOrReadOnly,
+    ]
     filter_backends = [filters.DjangoFilterBackend]
     filterset_class = QuestionFilter
 
@@ -123,4 +129,33 @@ class QuestionViewSet(
 
         questions = Question.objects.filter(author_id=user_id).prefetch_related("tags")
         serializer = self.get_serializer(questions, many=True)
+        return Response(serializer.data)
+
+
+class CommentViewSet(
+    common_mixins.MultipleSerializersMixinSet,
+    viewsets.ModelViewSet,
+):
+    queryset = Comment.objects.all()
+    serializer_class = forum_serializers.CommentSerializer
+    permission_classes = [
+        permissions.IsAuthenticatedOrReadOnly,
+        HasAccessToObjectOrReadOnly,
+        HasAccessToUpdateCertainCommentField,
+    ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.serializer_action_classes = {
+            "create": forum_serializers.CommentCreationSerializer,
+            "update": forum_serializers.CommentChangeSerializer,
+            "partial_update": forum_serializers.CommentChangeSerializer,
+        }
+
+    def retrieve(self, request, *args, **kwargs):
+        """Returns all comments by question id."""
+
+        question = get_object_or_404(Question.objects.all(), pk=kwargs.get("pk"))
+        comments = question.comments.all()
+        serializer = self.get_serializer(comments, many=True)
         return Response(serializer.data)

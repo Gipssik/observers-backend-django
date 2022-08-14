@@ -1,0 +1,74 @@
+[flake8]
+max-complexity = 6
+inline-quotes = double
+max-line-length = 88
+extend-ignore = E203
+docstring_style=sphinx
+
+ignore =
+  WPS305,
+  D100,
+  D104,
+  D105,
+  D107,
+  WPS412,
+  WPS306,
+  D106,
+  D401,
+  WPS326,
+  WPS226,
+  WPS110,
+  WPS115,
+  WPS122,
+  WPS602,
+  WPS605,
+  WPS204,
+  WPS202,
+  WPS232,
+  W503,
+  WPS201,
+  RST210,
+  WPS431,
+  WPS100,
+  WPS214,
+  WPS229,
+  WPS615,
+  WPS332,
+  WPS348,
+  WPS404,
+  WPS414,
+  WPS433,
+  WPS437,
+  WPS600,
+  B008,
+  DJ10,
+  DJ11,
+  DAR003,
+
+per-file-ignores =
+  test_*.py,tests.py,tests_*.py,*/tests/*,conftest.py:
+  S101,
+  WPS442,
+  WPS210,
+  WPS432,
+  DAR101,
+
+  __init__.py:
+  F401,
+  F403,
+  WPS410,
+
+  models.py:
+  WPS432,
+
+  ./config/settings.py:
+  WPS407,
+  E501,
+  WPS432,
+
+exclude =
+  ./.git,
+  ./venv,
+  migrations,
+  ./var,
+  ./manage.py,

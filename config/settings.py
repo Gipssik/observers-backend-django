@@ -12,7 +12,7 @@ SECRET_KEY = env.str("SECRET_KEY")
 
 DEBUG = env.bool("DEBUG", default=False)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS: list[str] = []
 
 INTERNAL_IPS = ["127.0.0.1", "localhost"]
 
@@ -104,7 +104,7 @@ SWAGGER_SETTINGS = {
             "type": "apiKey",
             "name": "Authorization",
             "in": "header",
-        }
+        },
     },
     "DEFAULT_MODEL_RENDERING": "example",
 }

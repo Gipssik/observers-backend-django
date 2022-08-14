@@ -1,15 +1,21 @@
+from typing import Any
+
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from authentication.models import User, Role
+from authentication.models import Role, User
 
 
 class TokenObtainSerializer(TokenObtainPairSerializer):
-    def validate(self, attrs) -> dict[str, str]:
-        """Changes structure of token to {'access_token': ..., 'token_type': ...}."""
+    """Custom JWT serializer."""
 
+    def validate(self, attrs: dict[str, str]) -> dict[str, str]:
+        """Changes structure of token to {'access_token': ..., 'token_type': ...}.
+
+        :param attrs: User credentials.
+        :return: Dict containing access token and its type.
+        """
         super().validate(attrs)
         refresh = self.get_token(self.user)
         return {
@@ -18,28 +24,43 @@ class TokenObtainSerializer(TokenObtainPairSerializer):
         }
 
 
-class UserCreationSerializer(serializers.ModelSerializer):
+class UserCreationSerializer(serializers.ModelSerializer[User]):
+    """Handles user creation."""
+
     class Meta:
         model = User
         fields = ["username", "email", "password"]
 
-    def create(self, validated_data: dict) -> User:
+    def create(self, validated_data: dict[str, Any]) -> User:
+        """Creates a user.
+
+        :param validated_data: User data.
+        :return: User instance.
+        """
         user_role, _ = Role.objects.get_or_create(title="User")
         validated_data["role"] = user_role
-        u = User(**validated_data)
-        u.set_password(validated_data["password"])
-        u.save()
-        return u
+        user = User(**validated_data)
+        user.set_password(validated_data["password"])
+        user.save()
+        return user
 
 
-class UserChangeSerializer(serializers.ModelSerializer):
+class UserChangeSerializer(serializers.ModelSerializer[User]):
+    """Handles user change."""
+
     password = serializers.CharField(required=False, validators=[validate_password])
 
     class Meta:
         model = User
         fields = ["email", "password", "profile_image"]
 
-    def update(self, instance: User, validated_data: dict) -> User:
+    def update(self, instance: User, validated_data: dict[str, Any]) -> User:
+        """Updates a user.
+
+        :param instance: User instance.
+        :param validated_data: New user data.
+        :return: Update user instance.
+        """
         if not validated_data:
             return instance
 
@@ -47,26 +68,33 @@ class UserChangeSerializer(serializers.ModelSerializer):
         if new_password := validated_data.get("password"):
             instance.set_password(new_password)
         instance.profile_image = validated_data.get(
-            "profile_image", instance.profile_image
+            "profile_image",
+            instance.profile_image,
         )
         instance.save()
         return instance
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer[User]):
+    """Handles user retrieving."""
+
     class Meta:
         model = User
         fields = ["id", "username", "email", "date_created", "profile_image", "role"]
         depth = 1
 
 
-class RoleBaseSerializer(serializers.ModelSerializer):
+class RoleBaseSerializer(serializers.ModelSerializer[Role]):
+    """Handles role creation and change."""
+
     class Meta:
         model = Role
         fields = ["title"]
 
 
-class RoleSerializer(serializers.ModelSerializer):
+class RoleSerializer(serializers.ModelSerializer[Role]):
+    """Handles role retrieving."""
+
     users = UserSerializer(many=True)
 
     class Meta:

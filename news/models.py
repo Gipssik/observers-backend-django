@@ -3,15 +3,21 @@ from django.utils import timezone
 
 
 class Article(models.Model):
+    """Model for database table 'article'."""
+
     title = models.CharField(max_length=256)
     content = models.TextField()
     date_created = models.DateTimeField(default=timezone.now)
     likes = models.ManyToManyField(
-        "authentication.User", blank=True, related_name="likes"
+        "authentication.User",
+        blank=True,
+        related_name="likes",
     )
     dislikes = models.ManyToManyField(
-        "authentication.User", blank=True, related_name="dislikes"
+        "authentication.User",
+        blank=True,
+        related_name="dislikes",
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.title

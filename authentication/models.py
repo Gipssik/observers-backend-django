@@ -1,14 +1,35 @@
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
-from django.contrib.auth.models import PermissionsMixin
 from django.core.validators import validate_email
 from django.db import models
 from django.utils import timezone
 
 
-class UserManager(BaseUserManager):
-    def create_user(self, username: str, email: str, password: str = None) -> "User":
-        """Creates and saves a User with the given username, email and password."""
+class Role(models.Model):
+    """Model for database table 'role'."""
 
+    title = models.CharField(max_length=128, unique=True)
+
+    def __str__(self) -> str:
+        return self.title
+
+
+class UserManager(BaseUserManager["User"]):
+    """Custom user manager."""
+
+    def create_user(
+        self,
+        username: str,
+        email: str,
+        password: str | None = None,
+    ) -> "User":
+        """Creates and saves a User with the given username, email and password.
+
+        :param username: User's username field.
+        :param email: User's email field.
+        :param password: User's password field.
+        :return: User instance.
+        :raises ValueError: if username or email was not provided.
+        """
         if not username:
             raise ValueError("Users must have a username")
         if not email:
@@ -16,7 +37,7 @@ class UserManager(BaseUserManager):
 
         validate_email(email)
 
-        role = Role.objects.filter(title="User").first()
+        role, _ = Role.objects.get_or_create(title="Admin")
         user = self.model(
             username=username,
             email=self.normalize_email(email),
@@ -27,24 +48,27 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(
-        self, username: str, email: str, password: str = None
+        self,
+        username: str,
+        email: str,
+        password: str | None = None,
     ) -> "User":
-        """Creates and saves a superuser with the given username, email and password."""
+        """Creates and saves a superuser with the given username, email and password.
 
+        :param username: Superuser's username field.
+        :param email: Superuser's email field.
+        :param password: Superuser's password field.
+        :return: User instance.
+        """
         user = self.create_user(username, email, password)
-        user.role = Role.objects.filter(title="Admin").first()
+        user.role, _ = Role.objects.get_or_create(title="Admin")
         user.save(using=self._db)
         return user
 
 
-class Role(models.Model):
-    title = models.CharField(max_length=128, unique=True)
-
-    def __str__(self):
-        return self.title
-
-
 class User(AbstractBaseUser):
+    """Custom user model."""
+
     username = models.CharField(max_length=128, unique=True, db_index=True)
     email = models.EmailField(unique=True, db_index=True)
     date_created = models.DateTimeField(default=timezone.now)
@@ -60,24 +84,21 @@ class User(AbstractBaseUser):
     EMAIL_FIELD = "email"
     REQUIRED_FIELDS = ["email"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.username
 
     @property
-    def is_superuser(self):
+    def is_superuser(self) -> bool:
+        """Is user admin or not.
+
+        :return: True - user is an admin, False - user is not an admin.
+        """
         return self.role.title == "Admin"
-
-    @staticmethod
-    def has_perm(perm, obj=None) -> bool:
-        """Does the user have a specific permission?"""
-        return True
-
-    @staticmethod
-    def has_module_perms(app_label) -> bool:
-        """Does the user have permissions to view the app `app_label`?"""
-        return True
 
     @property
     def is_staff(self) -> bool:
-        """Is the user a member of staff?"""
+        """Is user a staff or not.
+
+        :return: True - user is a staff, False - user is not a staff.
+        """
         return self.is_superuser

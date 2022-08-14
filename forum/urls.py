@@ -1,13 +1,13 @@
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from forum import views
 
 router = DefaultRouter()
-router.register(r"notifications", views.NotificationViewSet)
-router.register(r"tags", views.TagViewSet),
-router.register(r"questions", views.QuestionViewSet)
-router.register(r"comments", views.CommentViewSet)
+router.register("notifications", views.NotificationViewSet)
+router.register("tags", views.TagViewSet)
+router.register("questions", views.QuestionViewSet)
+router.register("comments", views.CommentViewSet)
 
 urlpatterns = [
     path("", include(router.urls)),

@@ -11,10 +11,7 @@ class ChatConsumer(WebsocketConsumer):
     DEFAULT_GROUP = "chat"
 
     def connect(self):
-        """Executes on websocket connection.
-
-        :return: None.
-        """
+        """Executes on websocket connection."""
         current_user = self.scope.get("user")
         if not current_user or isinstance(current_user, AnonymousUser):
             self.close()
@@ -44,7 +41,6 @@ class ChatConsumer(WebsocketConsumer):
 
         :param text_data: Text data from message.
         :param bytes_data: Bytes data from message.
-        :return:
         """
         data = text_data or bytes_data.decode("utf-8")
         data = json.loads(data)
@@ -58,7 +54,6 @@ class ChatConsumer(WebsocketConsumer):
         """Executes on event type 'chat.message'.
 
         :param event: Websocket message. Contains event type and message.
-        :return: None.
         """
         message = json.dumps(event.get("message"))
         self.send(message)
@@ -67,7 +62,6 @@ class ChatConsumer(WebsocketConsumer):
         """Executes on websocket disconnect.
 
         :param code: Status code.
-        :return: None
         """
         current_user = self.scope.get("user")
         response = {

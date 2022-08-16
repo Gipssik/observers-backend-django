@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from news import views
+from api.news import views
 
 router = DefaultRouter()
 router.register("articles", views.ArticleViewSet)

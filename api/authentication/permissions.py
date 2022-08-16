@@ -39,7 +39,7 @@ class IsAdminOrNotificationDeletionByOwner(permissions.IsAdminUser):
         :param view: Current view.
         :return: True - if it is DELETE method, otherwise calls superclass' method.
         """
-        action = getattr(view, "action")
+        action = getattr(view, "action", None)
         return (
             request.method == "DELETE"
             or action == "retrieve"

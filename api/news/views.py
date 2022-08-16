@@ -7,13 +7,13 @@ from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from api.news import serializers as news_serializers
+from api.news.permissions import IsUpdatingRatingOrIsAdminUserOrReadOnly
+from api.news.types import UpdateAction
 from authentication.models import User
 from common import mixins as common_mixins
 from common.exceptions import UnprocessableEntity
-from news import serializers as news_serializers
 from news.models import Article
-from news.permissions import IsUpdatingRatingOrIsAdminUserOrReadOnly
-from news.types import UpdateAction
 
 
 class ArticleViewSet(

@@ -1,6 +1,6 @@
 import functools
-from urllib import parse as url_parse
 from typing import Callable
+from urllib import parse as url_parse
 
 from channels.db import database_sync_to_async
 from channels.routing import URLRouter

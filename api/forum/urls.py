@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from forum import views
+from api.forum import views
 
 router = DefaultRouter()
 router.register("tags", views.TagViewSet)

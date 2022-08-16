@@ -8,16 +8,16 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from common import mixins as common_mixins
-from common.exceptions import UnprocessableEntity
-from common.permissions import IsAdminUserOrReadOnly
-from forum import serializers as forum_serializers
-from forum.filters import QuestionFilter
-from forum.models import Comment, Question, Tag
-from forum.permissions import (
+from api.forum import serializers as forum_serializers
+from api.forum.filters import QuestionFilter
+from api.forum.permissions import (
     HasAccessToObjectOrReadOnly,
     HasAccessToUpdateCertainCommentField,
 )
+from common import mixins as common_mixins
+from common.exceptions import UnprocessableEntity
+from common.permissions import IsAdminUserOrReadOnly
+from forum.models import Comment, Question, Tag
 
 
 class TagViewSet(

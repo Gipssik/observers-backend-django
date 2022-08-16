@@ -11,12 +11,12 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from authentication import serializers as auth_serializers
-from authentication.models import Notification, Role, User
-from authentication.permissions import (
+from api.authentication import serializers as auth_serializers
+from api.authentication.permissions import (
     CanChangeUserOrReadOnly,
     IsAdminOrNotificationDeletionByOwner,
 )
+from authentication.models import Notification, Role, User
 from common import mixins as common_mixins
 
 
@@ -78,11 +78,7 @@ class UserViewSet(
 
         :return: If action is 'me' - None, otherwise - superclass' paginator.
         """
-        return (
-            None
-            if self.action in {"me", "get_user_by_email_or_username"}
-            else super().paginator
-        )
+        return None if self.action == "me" else super().paginator
 
     def get_queryset(self) -> QuerySet[User]:
         """Returns queryset of users with selected role.
@@ -100,20 +96,17 @@ class UserViewSet(
         :return: Response with user.
         """
         key = kwargs.get("pk", "")
-
         with contextlib.suppress(ValueError):
             return super().retrieve(request, *args, pk=int(key))
 
         try:
             validate_email(key)
             user = self.get_queryset().filter(email=key).first()
-            if not user:
-                return Response(None)
         except ValidationError:
-            user = self._get_user_by_username(key)
+            user = get_object_or_404(self.get_queryset(), username=key)
 
-        serializer = self.get_serializer(user)
-        return Response(serializer.data)
+        data = self.get_serializer(user).data if user else None
+        return Response(data)
 
     @action(
         detail=False,
@@ -131,14 +124,6 @@ class UserViewSet(
         """
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
-
-    def _get_user_by_username(self, username: str) -> User:
-        """Returns user with the same username or raises 404.
-
-        :param username: Username.
-        :return: User instance.
-        """
-        return get_object_or_404(self.get_queryset(), username=username)
 
 
 class NotificationViewSet(

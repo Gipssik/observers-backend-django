@@ -18,7 +18,7 @@ class HasAccessToObjectOrReadOnly(permissions.IsAuthenticatedOrReadOnly):
         :return: True - if user is updating question views,
          otherwise - calls superclass method.
         """
-        action = getattr(view, "action")
+        action = getattr(view, "action", None)
         if action == "update_question_views":
             return True
         return super().has_permission(request, view)
@@ -36,7 +36,7 @@ class HasAccessToObjectOrReadOnly(permissions.IsAuthenticatedOrReadOnly):
         :param obj: Model instance.
         :return: True - if user is owner or admin, otherwise - False.
         """
-        action = getattr(view, "action")
+        action = getattr(view, "action", None)
         if action == "update_question_views":
             return True
         return (

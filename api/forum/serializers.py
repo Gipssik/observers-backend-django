@@ -3,7 +3,8 @@ from typing import Any
 from rest_framework import serializers
 from rest_framework.request import Request
 
-from authentication.models import Notification, User
+from api.forum import utils
+from authentication.models import User
 from common.exceptions import UnprocessableEntity
 from forum.models import Comment, Question, Tag
 
@@ -31,25 +32,20 @@ class QuestionCreationSerializer(serializers.ModelSerializer[Question]):
         :return: Question instance.
         :raises UnprocessableEntity: if there is no request object.
         """
-        # Set removes duplicates + db works faster with sets
-        tags: set[str] = set(validated_data.pop("tags"))
-
         if "author" not in validated_data:
             request: Request | None = self.context.get("request")
             if not request:
                 raise UnprocessableEntity
             validated_data["author"] = request.user
 
+        tags: list[str] | None = validated_data.pop("tags", None)
         question = Question.objects.create(**validated_data)
 
-        tags_db = Tag.objects.filter(title__in=tags)
-        new_tags_db = []
-        if len(tags_db) != len(tags):
-            existing_titles = {tag.title for tag in tags_db}
-            new_tags = tags - existing_titles
-            new_tags_db.extend(Tag.objects.create(title=tag) for tag in new_tags)
+        if tags:
+            # Set removes duplicates + db works faster with sets
+            tags_db = utils.get_db_tags(set(tags))
+            question.tags.set(tags_db)
 
-        question.tags.set((*tags_db, *new_tags_db))
         return question
 
 
@@ -76,13 +72,8 @@ class QuestionChangeSerializer(serializers.ModelSerializer[Question]):
         if tags is not None:
             # Set removes duplicates + db works faster with sets
             tags: set[str] = set(tags)
-            tags_db = Tag.objects.filter(title__in=tags)
-            new_tags_db = []
-            if len(tags_db) != len(tags):
-                existing_titles = {tag.title for tag in tags_db}
-                new_tags = tags - existing_titles
-                new_tags_db.extend(Tag.objects.create(title=tag) for tag in new_tags)
-            instance.tags.set((*tags_db, *new_tags_db))
+            tags_db = utils.get_db_tags(tags)
+            instance.tags.set(tags_db)
 
         for key, value in validated_data.items():
             setattr(instance, key, value)
@@ -155,24 +146,9 @@ class CommentCreationSerializer(serializers.ModelSerializer[Comment]):
 
         comment = Comment.objects.create(**validated_data)
         if request.user != comment.question.author:
-            self._create_notification(comment)
+            utils.create_notification(comment)
 
         return comment
-
-    @staticmethod
-    def _create_notification(instance: Comment) -> Notification:
-        """Creates notification for a comment.
-
-        :param instance: Comment instance.
-        :return: Notification instance.
-        """
-        username = instance.author.username
-        question_title = instance.question.title
-        return Notification.objects.create(
-            title=f'User {username} commented your question: "{question_title}".',
-            user=instance.question.author,
-            question=instance.question,
-        )
 
 
 class CommentChangeSerializer(serializers.ModelSerializer[Comment]):

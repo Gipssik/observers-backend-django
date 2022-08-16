@@ -4,43 +4,24 @@ from rest_framework import permissions
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
-from forum.models import Comment, Notification
+from forum.models import Comment
 
 
-class IsAdminOrNotificationDeletionByOwner(permissions.IsAdminUser):
-    """Is user admin or is current user deleting own notification."""
+class HasAccessToObjectOrReadOnly(permissions.IsAuthenticatedOrReadOnly):
+    """Check if current user is superuser or author of object."""
 
     def has_permission(self, request: Request, view: APIView) -> bool:
-        """Checks if it is DELETE method.
+        """Checks if user is updating question views.
 
         :param request: Current request.
         :param view: Current view.
-        :return: True - if it is DELETE method, otherwise calls superclass' method.
+        :return: True - if user is updating question views,
+         otherwise - calls superclass method.
         """
-        return request.method == "DELETE" or super().has_permission(request, view)
-
-    def has_object_permission(
-        self,
-        request: Request,
-        view: APIView,
-        obj: Notification,
-    ) -> bool:
-        """Checks if user can delete notification.
-
-        :param request: Current request.
-        :param view: Current view.
-        :param obj: Notification instance.
-        :return: True - if it is user's notification or user is admin, if not - False.
-        """
-        return (
-            request.method == "DELETE"
-            and obj.user == request.user
-            or request.user.is_superuser
-        )
-
-
-class HasAccessToObjectOrReadOnly(permissions.BasePermission):
-    """Check if current user is superuser or author of object."""
+        action = getattr(view, "action")
+        if action == "update_question_views":
+            return True
+        return super().has_permission(request, view)
 
     def has_object_permission(
         self,
@@ -55,6 +36,9 @@ class HasAccessToObjectOrReadOnly(permissions.BasePermission):
         :param obj: Model instance.
         :return: True - if user is owner or admin, otherwise - False.
         """
+        action = getattr(view, "action")
+        if action == "update_question_views":
+            return True
         return (
             request.method in permissions.SAFE_METHODS
             or request.user.is_superuser

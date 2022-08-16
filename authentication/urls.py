@@ -6,8 +6,9 @@ from authentication import views
 router = DefaultRouter()
 router.register("users", views.UserViewSet)
 router.register("roles", views.RoleViewSet)
+router.register("notifications", views.NotificationViewSet)
 
 urlpatterns = [
     path("token/", views.TokenObtainView.as_view(), name="token_obtain"),
-    path("", include(router.urls)),
+    path("accounts/", include(router.urls)),
 ]

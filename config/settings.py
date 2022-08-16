@@ -12,7 +12,9 @@ SECRET_KEY = env.str("SECRET_KEY")
 
 DEBUG = env.bool("DEBUG", default=False)
 
-ALLOWED_HOSTS: list[str] = []
+ALLOWED_HOSTS: list[str] = ["127.0.0.1", "localhost"]
+
+CORS_ORIGIN_ALLOW_ALL = True
 
 INTERNAL_IPS = ["127.0.0.1", "localhost"]
 
@@ -24,13 +26,15 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # 3rd party
+    "channels",
+    "corsheaders",
     "debug_toolbar",
-    "drf_yasg",
     "django_filters",
     "rest_framework",
     "rest_framework_simplejwt",
     # Local
     "authentication",
+    "chat",
     "forum",
     "news",
 ]
@@ -38,6 +42,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -65,6 +70,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "config.wsgi.application"
+ASGI_APPLICATION = "config.asgi.application"
 
 DATABASES = {
     "default": env.dj_db_url("DATABASE_URL"),
@@ -97,16 +103,13 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=30),
 }
 
-SWAGGER_SETTINGS = {
-    "USE_SESSION_AUTH": False,
-    "SECURITY_DEFINITIONS": {
-        "Bearer": {
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header",
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
         },
     },
-    "DEFAULT_MODEL_RENDERING": "example",
 }
 
 LANGUAGE_CODE = "en-us"

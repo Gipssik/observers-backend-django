@@ -2,25 +2,6 @@ from django.db import models
 from django.utils import timezone
 
 
-class Notification(models.Model):
-    """Model for database table 'notification'."""
-
-    title = models.CharField(max_length=256)
-    user = models.ForeignKey(
-        "authentication.User",
-        on_delete=models.CASCADE,
-        related_name="notifications",
-    )
-    question = models.ForeignKey(
-        "forum.Question",
-        on_delete=models.CASCADE,
-        related_name="notifications",
-    )
-
-    def __str__(self) -> str:
-        return self.title
-
-
 class Tag(models.Model):
     """Model for database table 'tag'."""
 

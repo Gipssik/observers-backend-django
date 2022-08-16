@@ -8,53 +8,16 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from authentication.models import User
 from common import mixins as common_mixins
 from common.exceptions import UnprocessableEntity
 from common.permissions import IsAdminUserOrReadOnly
 from forum import serializers as forum_serializers
 from forum.filters import QuestionFilter
-from forum.models import Comment, Notification, Question, Tag
+from forum.models import Comment, Question, Tag
 from forum.permissions import (
     HasAccessToObjectOrReadOnly,
     HasAccessToUpdateCertainCommentField,
-    IsAdminOrNotificationDeletionByOwner,
 )
-
-
-class NotificationViewSet(
-    common_mixins.MultipleSerializersMixinSet,
-    viewsets.ModelViewSet,
-):
-    """Set of notification views."""
-
-    queryset = Notification.objects.all()
-    permission_classes = [IsAdminOrNotificationDeletionByOwner]
-
-    def __init__(self, **kwargs: Any):
-        super().__init__(**kwargs)
-        self.serializer_action_classes = {
-            "list": forum_serializers.NotificationSerializer,
-            "create": forum_serializers.NotificationBaseSerializer,
-            "retrieve": forum_serializers.NotificationSerializer,
-            "update": forum_serializers.NotificationBaseSerializer,
-            "partial_update": forum_serializers.NotificationBaseSerializer,
-        }
-
-    def retrieve(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        """Returns all user's notifications.
-
-        :param request: Current request.
-        :param args: Args.
-        :param kwargs: Kwargs.
-        :return: Response with notifications data.
-        """
-        user: User = get_object_or_404(
-            User.objects.all().prefetch_related("notifications"),
-            pk=kwargs.get("pk"),
-        )
-        serializer = self.get_serializer(user.notifications.all(), many=True)
-        return Response(serializer.data)
 
 
 class TagViewSet(
@@ -83,6 +46,23 @@ class TagViewSet(
         """
         return Tag.objects.all().prefetch_related("questions__tags")
 
+    def retrieve(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Returns tag by id or by its title.
+
+        :param request: Current request.
+        :param args: Args
+        :param kwargs: Kwargs.
+        :return: Response with tag.
+        """
+        pk = kwargs.get("pk", "")
+        try:
+            pk = int(pk)
+        except ValueError:
+            tag = get_object_or_404(self.get_queryset(), title=pk)
+            serializer = self.get_serializer(tag)
+            return Response(serializer.data)
+        return super().retrieve(request, *args, **kwargs)
+
 
 class QuestionViewSet(
     common_mixins.MultipleSerializersMixinSet,
@@ -93,7 +73,6 @@ class QuestionViewSet(
     queryset = Question.objects.all()
     serializer_class = forum_serializers.QuestionSerializer
     permission_classes = [
-        permissions.IsAuthenticatedOrReadOnly,
         HasAccessToObjectOrReadOnly,
     ]
     filter_backends = [filters.DjangoFilterBackend]

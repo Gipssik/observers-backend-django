@@ -102,3 +102,22 @@ class User(AbstractBaseUser):
         :return: True - user is a staff, False - user is not a staff.
         """
         return self.is_superuser
+
+
+class Notification(models.Model):
+    """Model for database table 'notification'."""
+
+    title = models.CharField(max_length=256)
+    user = models.ForeignKey(
+        "authentication.User",
+        on_delete=models.CASCADE,
+        related_name="notifications",
+    )
+    question = models.ForeignKey(
+        "forum.Question",
+        on_delete=models.CASCADE,
+        related_name="notifications",
+    )
+
+    def __str__(self) -> str:
+        return self.title

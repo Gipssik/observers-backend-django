@@ -4,7 +4,8 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from authentication.models import Role, User
+from authentication.models import Notification, Role, User
+from forum.models import Question
 
 
 class TokenObtainSerializer(TokenObtainPairSerializer):
@@ -100,3 +101,31 @@ class RoleSerializer(serializers.ModelSerializer[Role]):
     class Meta:
         model = Role
         fields = ["id", "title", "users"]
+
+
+class NotificationBaseSerializer(serializers.ModelSerializer[Notification]):
+    """Handles create and update operations."""
+
+    user_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        source="user",
+    )
+    question_id = serializers.PrimaryKeyRelatedField(
+        queryset=Question.objects.all(),
+        source="question",
+    )
+
+    class Meta:
+        model = Notification
+        fields = ["title", "user_id", "question_id"]
+
+
+class NotificationSerializer(serializers.ModelSerializer[Notification]):
+    """Handles notification retrieving."""
+
+    user_id = serializers.PrimaryKeyRelatedField(read_only=True)
+    question_id = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = Notification
+        exclude = ["user", "question"]

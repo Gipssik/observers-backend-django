@@ -5,7 +5,7 @@ from django.contrib.auth.forms import ReadOnlyPasswordHashField
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 
-from authentication.models import Role, User
+from authentication.models import Notification, Role, User
 
 
 class UserCreationForm(forms.ModelForm):
@@ -101,3 +101,4 @@ class UserAdmin(BaseUserAdmin):
 admin.site.register(User, UserAdmin)
 admin.site.unregister(Group)
 admin.site.register(Role)
+admin.site.register(Notification)

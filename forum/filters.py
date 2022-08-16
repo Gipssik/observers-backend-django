@@ -47,4 +47,4 @@ class QuestionFilter(django_filters.FilterSet):
 
     class Meta:
         model = Question
-        fields = ["title", "date_created", "views"]
+        fields = ["title", "date_created", "order_by_views"]

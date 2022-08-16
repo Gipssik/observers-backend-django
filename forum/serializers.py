@@ -3,47 +3,15 @@ from typing import Any
 from rest_framework import serializers
 from rest_framework.request import Request
 
-from authentication.models import User
+from authentication.models import Notification, User
 from common.exceptions import UnprocessableEntity
-from forum.models import Comment, Notification, Question, Tag
-
-
-class NotificationBaseSerializer(serializers.ModelSerializer[Notification]):
-    """Handles create and update operations."""
-
-    user_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-        source="user",
-    )
-    question_id = serializers.PrimaryKeyRelatedField(
-        queryset=Question.objects.all(),
-        source="question",
-    )
-
-    class Meta:
-        model = Notification
-        fields = ["title", "user_id", "question_id"]
-
-
-class NotificationSerializer(serializers.ModelSerializer[Notification]):
-    """Handles notification retrieving."""
-
-    user_id = serializers.PrimaryKeyRelatedField(read_only=True)
-    question_id = serializers.PrimaryKeyRelatedField(read_only=True)
-
-    class Meta:
-        model = Notification
-        exclude = ["user", "question"]
+from forum.models import Comment, Question, Tag
 
 
 class QuestionCreationSerializer(serializers.ModelSerializer[Question]):
     """Handles question creation."""
 
-    tags = serializers.SlugRelatedField(
-        many=True,
-        slug_field="title",
-        queryset=Tag.objects.all(),
-    )
+    tags = serializers.ListField(child=serializers.CharField(), required=False)
     author_id = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(),
         required=False,
@@ -64,7 +32,7 @@ class QuestionCreationSerializer(serializers.ModelSerializer[Question]):
         :raises UnprocessableEntity: if there is no request object.
         """
         # Set removes duplicates + db works faster with sets
-        tags = set(validated_data.pop("tags"))
+        tags: set[str] = set(validated_data.pop("tags"))
 
         if "author" not in validated_data:
             request: Request | None = self.context.get("request")
@@ -74,18 +42,21 @@ class QuestionCreationSerializer(serializers.ModelSerializer[Question]):
 
         question = Question.objects.create(**validated_data)
 
-        question.tags.set(tags)
+        tags_db = Tag.objects.filter(title__in=tags)
+        new_tags_db = []
+        if len(tags_db) != len(tags):
+            existing_titles = {tag.title for tag in tags_db}
+            new_tags = tags - existing_titles
+            new_tags_db.extend(Tag.objects.create(title=tag) for tag in new_tags)
+
+        question.tags.set((*tags_db, *new_tags_db))
         return question
 
 
 class QuestionChangeSerializer(serializers.ModelSerializer[Question]):
     """Handles question changing."""
 
-    tags = serializers.SlugRelatedField(
-        many=True,
-        slug_field="title",
-        queryset=Tag.objects.all(),
-    )
+    tags = serializers.ListField(child=serializers.CharField(), required=False)
 
     class Meta:
         model = Question
@@ -104,8 +75,14 @@ class QuestionChangeSerializer(serializers.ModelSerializer[Question]):
         tags = validated_data.pop("tags", None)
         if tags is not None:
             # Set removes duplicates + db works faster with sets
-            tags = set(tags)
-            instance.tags.set(tags)
+            tags: set[str] = set(tags)
+            tags_db = Tag.objects.filter(title__in=tags)
+            new_tags_db = []
+            if len(tags_db) != len(tags):
+                existing_titles = {tag.title for tag in tags_db}
+                new_tags = tags - existing_titles
+                new_tags_db.extend(Tag.objects.create(title=tag) for tag in new_tags)
+            instance.tags.set((*tags_db, *new_tags_db))
 
         for key, value in validated_data.items():
             setattr(instance, key, value)
@@ -177,7 +154,7 @@ class CommentCreationSerializer(serializers.ModelSerializer[Comment]):
             validated_data["author"] = request.user.id
 
         comment = Comment.objects.create(**validated_data)
-        if request.user != comment.author:
+        if request.user != comment.question.author:
             self._create_notification(comment)
 
         return comment
@@ -193,7 +170,7 @@ class CommentCreationSerializer(serializers.ModelSerializer[Comment]):
         question_title = instance.question.title
         return Notification.objects.create(
             title=f'User {username} commented your question: "{question_title}".',
-            user=instance.author,
+            user=instance.question.author,
             question=instance.question,
         )
 

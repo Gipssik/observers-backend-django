@@ -19,6 +19,13 @@ ALLOWED_HOSTS: list[str] = [
     ".herokuapp.com",
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.gipss.tech",
+    "http://*.gipss.tech",
+    "https://*.herokuapp.com",
+    "http://*.herokuapp.com",
+]
+
 CORS_ORIGIN_ALLOW_ALL = True
 
 INTERNAL_IPS = ["127.0.0.1", "localhost"]

@@ -1,6 +1,5 @@
 from typing import Any
 
-from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -28,6 +27,8 @@ class TokenObtainSerializer(TokenObtainPairSerializer):
 class UserCreationSerializer(serializers.ModelSerializer[User]):
     """Handles user creation."""
 
+    password = serializers.CharField(min_length=4)
+
     class Meta:
         model = User
         fields = ["username", "email", "password"]
@@ -49,7 +50,7 @@ class UserCreationSerializer(serializers.ModelSerializer[User]):
 class UserChangeSerializer(serializers.ModelSerializer[User]):
     """Handles user change."""
 
-    password = serializers.CharField(required=False, validators=[validate_password])
+    password = serializers.CharField(required=False, min_length=4)
 
     class Meta:
         model = User

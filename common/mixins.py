@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Any, Type
 
 from django.db.models import Model
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
@@ -98,7 +99,12 @@ class UpdateRetrieveSerializerMixin(Base):
             data=request.data,
             partial=partial,
         )
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as err:
+            print(err)
+            print(type(err))
+            raise err
         instance = self.perform_update(serializer)
 
         if getattr(instance, "_prefetched_objects_cache", None):

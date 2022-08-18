@@ -103,6 +103,16 @@ class User(AbstractBaseUser):
         """
         return self.is_superuser
 
+    @staticmethod
+    def has_perm(perm, obj=None) -> bool:
+        """Does the user have a specific permission?"""
+        return True
+
+    @staticmethod
+    def has_module_perms(app_label) -> bool:
+        """Does the user have permissions to view the app `app_label`?"""
+        return True
+
 
 class Notification(models.Model):
     """Model for database table 'notification'."""

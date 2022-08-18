@@ -12,7 +12,14 @@ SECRET_KEY = env.str("SECRET_KEY", default="secret")
 
 DEBUG = env.bool("DEBUG", default=False)
 
-ALLOWED_HOSTS: list[str] = ["127.0.0.1", "localhost"]
+ALLOWED_HOSTS: list[str] = [
+    "127.0.0.1",
+    "localhost",
+    "https://observers.gipss.tech",
+    "http://observers.gipss.tech",
+    "https://observers-frontend.herokuapp.com",
+    "http://observers-frontend.herokuapp.com",
+]
 
 CORS_ORIGIN_ALLOW_ALL = True
 
